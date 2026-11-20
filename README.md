@@ -1,6 +1,6 @@
 # Shogun Showdown mods
 
-BepInEx 5 plugins for Shogun Showdown (Unity 2021.3, Mono). Built and tested on macOS.
+BepInEx 5 plugins for Shogun Showdown (Unity 2021.3, Mono). Built and tested on macOS (soon to be testing on Win10/11 & Debian/Arch/Fedora Linux.)
 
 | Mod | What it does | Settings (`BepInEx/config/`) |
 |---|---|---|
