@@ -1,26 +1,31 @@
-#!/bin/zsh
-# Builds Shogun Showdown mods and copies them into the game's BepInEx plugins folder.
-#   ./build.sh                  builds every mod (CoinMultiplier, DevMode, Performance, WeaponCooldowns)
+#!/usr/bin/env bash
+# Builds the Shogun Showdown mods and installs them into the game's BepInEx/plugins folder (macOS and Linux).
+# On Windows, run `dotnet build -c Release` in this folder instead; it does the same thing.
+#   ./build.sh                  builds every mod
 #   ./build.sh CoinMultiplier   builds just that one
+# If the game is not in the default Steam library, set SHOGUN_SHOWDOWN_DIR to its folder first.
 
-export DOTNET_ROOT="/opt/homebrew/opt/dotnet/libexec"
-MODS_DIR="${0:A:h}"
-PLUGINS_DIR="$HOME/Library/Application Support/Steam/steamapps/common/Shogun Showdown/BepInEx/plugins"
+cd "$(dirname "$0")" || exit 1
 
-if (( $# > 0 )); then
-  mods=("$@")
-else
-  mods=(CoinMultiplier DevMode Performance WeaponCooldowns)
+# Homebrew's dotnet needs DOTNET_ROOT to find its runtime (Apple Silicon, then Intel prefix)
+if [ -z "$DOTNET_ROOT" ]; then
+  for dir in /opt/homebrew/opt/dotnet/libexec /usr/local/opt/dotnet/libexec; do
+    if [ -d "$dir" ]; then
+      export DOTNET_ROOT="$dir"
+      break
+    fi
+  done
 fi
 
-for mod in $mods; do
-  echo "Building $mod..."
-  if ! dotnet build "$MODS_DIR/$mod" -c Release --nologo -v quiet; then
-    echo "$mod failed to build, the game still has the previous version."
+if [ $# -eq 0 ]; then
+  set -- ShogunShowdownMods.sln
+fi
+
+for target in "$@"; do
+  if ! dotnet build "$target" -c Release --nologo -v minimal; then
+    echo "Build failed. Mods that built were installed; any that failed keep their previous version in the game."
     exit 1
   fi
-  cp "$MODS_DIR/$mod/bin/Release/netstandard2.1/$mod.dll" "$PLUGINS_DIR/"
-  echo "$mod installed."
 done
 
 echo "Done. Restart the game to load the changes."

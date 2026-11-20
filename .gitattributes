@@ -1,0 +1,2 @@
+# Keep Unix line endings on the build script even when cloned on Windows, so it still runs in bash/WSL
+*.sh text eol=lf

@@ -2,6 +2,12 @@
 bin/
 obj/
 
+# IDE files (Visual Studio, Rider, VS Code)
+.vs/
+.idea/
+.vscode/
+*.user
+
 # Decompiled game code: the game's copyrighted source, for local reference only
 decompiled/
 

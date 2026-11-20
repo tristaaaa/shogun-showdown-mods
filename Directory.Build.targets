@@ -1,0 +1,20 @@
+<Project>
+  <!-- Only the mod projects opt in, so building anything else under this folder is unaffected -->
+
+  <!-- Fail early with a clear message instead of a wall of unresolved-reference errors -->
+  <Target Name="CheckGamePaths" BeforeTargets="ResolveAssemblyReferences" Condition="'$(IsShogunShowdownMod)' == 'true'">
+    <Error Condition="!Exists('$(GameManaged)/Assembly-CSharp.dll')"
+           Text="Shogun Showdown's game DLLs were not found in '$(GameManaged)'. If the game is not in the default Steam library, set the game folder with -p:GameDir=&quot;...&quot; or the SHOGUN_SHOWDOWN_DIR environment variable." />
+    <Error Condition="!Exists('$(BepInExCore)/BepInEx.dll')"
+           Text="BepInEx was not found in '$(BepInExCore)'. Install BepInEx 5 in the game folder, or extract it into downloads/bepinex next to the README." />
+  </Target>
+
+  <!-- Copy each built mod into the game's BepInEx/plugins folder. Unchanged DLLs are skipped, since
+       Windows locks a loaded plugin while the game is running and overwriting it would fail. -->
+  <Target Name="InstallToGame" AfterTargets="Build" Condition="'$(IsShogunShowdownMod)' == 'true'">
+    <Warning Condition="!Exists('$(PluginsDir)')"
+             Text="$(AssemblyName) was built but not installed: '$(PluginsDir)' does not exist. Launch the game once with BepInEx installed so it creates the folder." />
+    <Copy Condition="Exists('$(PluginsDir)')" SourceFiles="$(TargetPath)" DestinationFolder="$(PluginsDir)" SkipUnchangedFiles="true" />
+    <Message Condition="Exists('$(PluginsDir)')" Importance="high" Text="$(AssemblyName) installed to $(PluginsDir)" />
+  </Target>
+</Project>

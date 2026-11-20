@@ -14,24 +14,47 @@ Each config file is created the first time the game starts with that mod install
 ## Requirements
 
 - Shogun Showdown installed through Steam
-- [.NET SDK](https://dotnet.microsoft.com/download) (`brew install dotnet` on macOS)
-- [BepInEx 5](https://github.com/BepInEx/BepInEx/releases) for your platform, installed in the game folder
+- [.NET SDK](https://dotnet.microsoft.com/download) 8 or newer (`brew install dotnet` on macOS, `winget install Microsoft.DotNet.SDK.8` on Windows, your distro's `dotnet-sdk` package on Linux)
+- [BepInEx 5](https://github.com/BepInEx/BepInEx/releases) for your platform, installed in the game folder and launched once so it creates `BepInEx/plugins`
 
 ## Building
 
-The projects compile against the game's DLLs and BepInEx's core DLLs:
+Building compiles each mod against the game's DLLs and BepInEx's core DLLs, then copies it into the game's `BepInEx/plugins` folder.
 
-- Game DLLs: read from the default macOS Steam install path (`GameManaged` in each `.csproj`)
-- BepInEx DLLs: extract the BepInEx release into `downloads/bepinex/` next to this README (`BepInExCore` in each `.csproj`)
-
-Then run:
+macOS and Linux:
 
 ```
-./build.sh                  # build all mods and copy them into BepInEx/plugins
+./build.sh                  # build all mods
 ./build.sh WeaponCooldowns  # build one mod
 ```
 
-Restart the game to load the new builds.
+Windows (or any platform):
+
+```
+dotnet build -c Release                  # build all mods
+dotnet build WeaponCooldowns -c Release  # build one mod
+```
+
+Restart the game to load the new builds. On Windows, close the game before building: Windows locks the mod files while the game is running, so changed mods cannot be copied in.
+
+### Where it looks for the game
+
+The game folder is found automatically in the default Steam library:
+
+| Platform | Game folder |
+|---|---|
+| macOS | `~/Library/Application Support/Steam/steamapps/common/Shogun Showdown` |
+| Windows | `C:\Program Files (x86)\Steam\steamapps\common\Shogun Showdown` |
+| Linux | `~/.local/share/Steam/...`, `~/.steam/steam/...` or Flatpak Steam `~/.var/app/com.valvesoftware.Steam/.local/share/Steam/...` |
+
+If the game is in another Steam library, point the build at the game folder (the one containing `ShogunShowdown.app` or `ShogunShowdown_Data`):
+
+```
+SHOGUN_SHOWDOWN_DIR="/path/to/Shogun Showdown" ./build.sh
+dotnet build -c Release -p:GameDir="D:/SteamLibrary/steamapps/common/Shogun Showdown"
+```
+
+BepInEx's DLLs are taken from the BepInEx installed in the game folder. To build against a different copy, extract a BepInEx release into `downloads/bepinex/` next to this README. All of these paths are set in `Directory.Build.props`.
 
 ## Screenshots
 

@@ -5,8 +5,7 @@
     <AssemblyName>DevMode</AssemblyName>
     <LangVersion>latest</LangVersion>
     <Nullable>disable</Nullable>
-    <GameManaged>$(HOME)/Library/Application Support/Steam/steamapps/common/Shogun Showdown/ShogunShowdown.app/Contents/Resources/Data/Managed</GameManaged>
-    <BepInExCore>$(MSBuildThisFileDirectory)../downloads/bepinex/BepInEx/core</BepInExCore>
+    <IsShogunShowdownMod>true</IsShogunShowdownMod>
   </PropertyGroup>
 
   <ItemGroup>

@@ -1,0 +1,41 @@
+<Project>
+  <!--
+    Shared paths for the mod projects, picked automatically on macOS, Windows and Linux.
+    If the game is not in the default Steam library, set the game folder (the one containing
+    ShogunShowdown.app or ShogunShowdown_Data) with either:
+      dotnet build -p:GameDir="D:/SteamLibrary/steamapps/common/Shogun Showdown"
+      the SHOGUN_SHOWDOWN_DIR environment variable
+  -->
+  <PropertyGroup>
+    <GameDir Condition="'$(GameDir)' == ''">$(SHOGUN_SHOWDOWN_DIR)</GameDir>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(GameDir)' == '' and $([MSBuild]::IsOSPlatform('OSX'))">
+    <GameDir>$(HOME)/Library/Application Support/Steam/steamapps/common/Shogun Showdown</GameDir>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(GameDir)' == '' and $([MSBuild]::IsOSPlatform('Windows'))">
+    <GameDir>$(MSBuildProgramFiles32)/Steam/steamapps/common/Shogun Showdown</GameDir>
+  </PropertyGroup>
+
+  <!-- Linux: Steam's usual install, the ~/.steam/steam link some distros use, then the Flatpak install -->
+  <PropertyGroup Condition="'$(GameDir)' == '' and $([MSBuild]::IsOSPlatform('Linux'))">
+    <GameDir Condition="Exists('$(HOME)/.local/share/Steam/steamapps/common/Shogun Showdown')">$(HOME)/.local/share/Steam/steamapps/common/Shogun Showdown</GameDir>
+    <GameDir Condition="'$(GameDir)' == '' and Exists('$(HOME)/.steam/steam/steamapps/common/Shogun Showdown')">$(HOME)/.steam/steam/steamapps/common/Shogun Showdown</GameDir>
+    <GameDir Condition="'$(GameDir)' == '' and Exists('$(HOME)/.var/app/com.valvesoftware.Steam/.local/share/Steam/steamapps/common/Shogun Showdown')">$(HOME)/.var/app/com.valvesoftware.Steam/.local/share/Steam/steamapps/common/Shogun Showdown</GameDir>
+    <GameDir Condition="'$(GameDir)' == ''">$(HOME)/.local/share/Steam/steamapps/common/Shogun Showdown</GameDir>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <!-- macOS ships the game as an .app bundle; Windows and Linux (native or Proton) use a ShogunShowdown_Data folder -->
+    <GameManaged Condition="'$(GameManaged)' == '' and Exists('$(GameDir)/ShogunShowdown.app')">$(GameDir)/ShogunShowdown.app/Contents/Resources/Data/Managed</GameManaged>
+    <GameManaged Condition="'$(GameManaged)' == ''">$(GameDir)/ShogunShowdown_Data/Managed</GameManaged>
+
+    <!-- BepInEx's core DLLs are the same on every platform: use a downloaded copy if there is one,
+         otherwise the copy already installed in the game folder -->
+    <BepInExCore Condition="'$(BepInExCore)' == '' and Exists('$(MSBuildThisFileDirectory)downloads/bepinex/BepInEx/core/BepInEx.dll')">$(MSBuildThisFileDirectory)downloads/bepinex/BepInEx/core</BepInExCore>
+    <BepInExCore Condition="'$(BepInExCore)' == ''">$(GameDir)/BepInEx/core</BepInExCore>
+
+    <PluginsDir Condition="'$(PluginsDir)' == ''">$(GameDir)/BepInEx/plugins</PluginsDir>
+  </PropertyGroup>
+</Project>
