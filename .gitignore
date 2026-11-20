@@ -1,0 +1,16 @@
+# Build output
+bin/
+obj/
+
+# Decompiled game code: the game's copyrighted source, for local reference only
+decompiled/
+
+# Third-party downloads (BepInEx) and personal save backups
+downloads/
+save-backups/
+
+# Local Claude Code tooling, not part of the mods
+.claude/
+CLAUDE.md
+
+.DS_Store
