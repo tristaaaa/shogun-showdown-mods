@@ -39,5 +39,6 @@ Restart the game to load the new builds.
 |---|---|
 | CoinMultiplier | <img width="2056" height="1329" alt="Screenshot 2026-11-19 at 7 59 45 PM" src="https://github.com/user-attachments/assets/e7cf05fe-8827-45a0-bdc5-ac2a2c586b5c" /> |
 | DevMode | <img width="416" height="582" alt="image" src="https://github.com/user-attachments/assets/031f7c7b-e682-4242-98bb-1979c6b534f5" /> |
-| Performance | (The only visual difference affected is FPS) \ <img width="116" height="25" alt="Screenshot 2026-11-19 at 7 57 46 PM" src="https://github.com/user-attachments/assets/24506a83-8f59-4c4e-9837-311972e24c0b" /> |
+| Performance | (The only visual difference affected is FPS)
+<img width="116" height="25" alt="Screenshot 2026-11-19 at 7 57 46 PM" src="https://github.com/user-attachments/assets/24506a83-8f59-4c4e-9837-311972e24c0b" /> |
 | WeaponCooldowns | <img width="984" height="521" alt="Screenshot 2026-11-19 at 8 01 43 PM" src="https://github.com/user-attachments/assets/3e7a39a0-f27c-4489-bd8e-0a9ca320ad2b" /> |
