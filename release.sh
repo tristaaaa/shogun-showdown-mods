@@ -34,7 +34,8 @@ name="ShogunShowdownMods-$version"
 dist="dist/$version"
 rm -rf "$dist"
 mkdir -p "$dist/$name"
-for project in */*.csproj; do
+# Only the mod projects, the same ones Directory.Build.targets installs; any other project here is skipped
+for project in $(grep -l '<IsShogunShowdownMod>true</IsShogunShowdownMod>' */*.csproj); do
   mod="$(basename "$project" .csproj)"
   cp "$mod"/bin/Release/*/"$mod.dll" "$dist/$name/"
 done
