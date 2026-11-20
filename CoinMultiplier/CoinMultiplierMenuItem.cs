@@ -1,5 +1,4 @@
 using System.Linq;
-using System.Text;
 using HarmonyLib;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -21,6 +20,10 @@ namespace CoinMultiplier
         private RectTransform sliderRect;
 
         private bool rangeSet;
+
+        // Base_SliderMenuItem.OnLeft/OnRight change Slider.value (which notifies) and then call
+        // OnSliderValueChange again, so each press arrives twice. Tracking the applied step skips the repeat.
+        private int appliedStep = -1;
 
         private int lastEnabledStep = ToStep(1.5f);
 
@@ -72,7 +75,6 @@ namespace CoinMultiplier
             rect.anchoredPosition = new Vector2(SliderOffsetX, 0f);
             rect.localScale = Vector3.one;
             sliderRect = rect;
-            Plugin.Log.LogInfo($"Moved slider out of the label (size {size}, x offset {SliderOffsetX})");
         }
 
         private void LateUpdate()
@@ -86,22 +88,28 @@ namespace CoinMultiplier
                 eventSystem.SetSelectedGameObject(null);
             }
 
-            // The label scales around its pivot, so its right edge moves by (scale - 1) times its extent
+            // The label scales around its pivot, so its right edge moves by (scale - 1) times its extent.
+            // Only write the position when it changes, since each write marks the menu canvas for a rebuild.
             if (sliderRect != null && text != null)
             {
-                float labelRight = text.textBounds.max.x;
-                float growth = labelRight > 0f ? labelRight * (text.rectTransform.localScale.x - 1f) : 0f;
-                sliderRect.anchoredPosition = new Vector2(SliderOffsetX + growth, 0f);
+                float scale = text.rectTransform.localScale.x;
+                float growth = scale == 1f ? 0f : Mathf.Max(0f, text.textBounds.max.x) * (scale - 1f);
+                float x = SliderOffsetX + growth;
+                if (sliderRect.anchoredPosition.x != x)
+                {
+                    sliderRect.anchoredPosition = new Vector2(x, 0f);
+                }
             }
         }
 
         protected override void OnSliderValueChange()
         {
-            if (!rangeSet)
+            int step = (int)Slider.value;
+            if (!rangeSet || step == appliedStep)
             {
                 return;
             }
-            int step = (int)Slider.value;
+            appliedStep = step;
             Plugin.Multiplier.Value = FromStep(step);
             if (step > 0)
             {
@@ -125,6 +133,7 @@ namespace CoinMultiplier
             {
                 lastEnabledStep = step;
             }
+            appliedStep = step;
             Slider.SetValueWithoutNotify(step);
             RefreshLabel();
         }
@@ -141,12 +150,14 @@ namespace CoinMultiplier
 
     internal static class MenuItemInjector
     {
-        private static bool hierarchyLogged;
+        // Runs on every pause, so resolve the private field once instead of by name each time
+        private static readonly AccessTools.FieldRef<PauseMenu, MenuPage> InitialMenuPage =
+            AccessTools.FieldRefAccess<PauseMenu, MenuPage>("initialMenuPage");
 
         // Returns true when the pause menu has the in-game slider, false if the IMGUI fallback is needed
         internal static bool EnsureInjected(PauseMenu pauseMenu)
         {
-            MenuPage page = AccessTools.Field(typeof(PauseMenu), "initialMenuPage").GetValue(pauseMenu) as MenuPage;
+            MenuPage page = InitialMenuPage(pauseMenu);
             Transform container = page != null ? page.transform.Find("Canvas/MenuItems") : null;
             if (container == null)
             {
@@ -190,12 +201,6 @@ namespace CoinMultiplier
             Object.Destroy(holder);
 
             Plugin.Log.LogInfo($"Added Coin Multiplier slider to the pause menu (copied from {template.name})");
-            if (!hierarchyLogged)
-            {
-                hierarchyLogged = true;
-                Plugin.Log.LogInfo("Pause menu items:\n" + DescribeHierarchy(container, 0, 3));
-                Plugin.Log.LogInfo("Coin Multiplier item:\n" + DescribeHierarchy(clone.transform, 0, 6));
-            }
             return true;
         }
 
@@ -206,23 +211,6 @@ namespace CoinMultiplier
                 .Where(c => c.gameObject.scene.IsValid())
                 .ToArray();
             return candidates.FirstOrDefault(c => c is MasterVolumeMenuItem) ?? candidates.FirstOrDefault();
-        }
-
-        private static string DescribeHierarchy(Transform transform, int depth, int maxDepth)
-        {
-            StringBuilder builder = new StringBuilder();
-            string components = string.Join(", ", transform.GetComponents<Component>().Select(c => c.GetType().Name));
-            RectTransform rect = transform as RectTransform;
-            string position = rect != null ? $" pos={rect.anchoredPosition} size={rect.sizeDelta}" : "";
-            builder.AppendLine($"{new string(' ', depth * 2)}{transform.name} [{components}]{position}");
-            if (depth < maxDepth)
-            {
-                foreach (Transform child in transform)
-                {
-                    builder.Append(DescribeHierarchy(child, depth + 1, maxDepth));
-                }
-            }
-            return builder.ToString();
         }
     }
 }

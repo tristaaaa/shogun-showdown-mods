@@ -4,6 +4,7 @@ using BepInEx.Configuration;
 using BepInEx.Logging;
 using HarmonyLib;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace CoinMultiplier
 {
@@ -15,8 +16,6 @@ namespace CoinMultiplier
 
         internal static ConfigEntry<float> Multiplier;
         internal static ManualLogSource Log;
-        internal static bool GamePaused;
-        internal static bool UsingMenuSlider;
 
         // Fractional part of the multiplier carried between pickups, so 1.5x averages to exactly 1.5x
         private static float carry;
@@ -29,8 +28,7 @@ namespace CoinMultiplier
                     new AcceptableValueRange<float>(MinMultiplier, MaxMultiplier)));
 
             new Harmony("com.flargington.shogunshowdown.coinmultiplier").PatchAll();
-            CoinMultiplierGUI.EnsureExists();
-            Logger.LogInfo($"Coin Multiplier loaded (x{Multiplier.Value:0.0})");
+            Logger.LogInfo($"Coin Multiplier loaded (x{Multiplier.Value:0.00})");
         }
 
         internal static int ExtraCoins(int baseValue)
@@ -42,6 +40,8 @@ namespace CoinMultiplier
         }
     }
 
+    // Fallback slider, only created if the in-game slider cannot be added. It is disabled whenever it is not
+    // showing, since any active OnGUI makes Unity run its IMGUI pass every frame.
     // Lives on its own hidden GameObject: GameStateResetter destroys every object FindObjectsOfType
     // returns (including the BepInEx manager), and HideAndDontSave objects are excluded from that
     internal class CoinMultiplierGUI : MonoBehaviour
@@ -50,25 +50,26 @@ namespace CoinMultiplier
 
         private Rect windowRect = new Rect(20f, 20f, 320f, 110f);
 
-        internal static void EnsureExists()
+        internal static void SetVisible(bool visible)
         {
-            if (instance != null)
+            if (instance == null)
             {
-                return;
+                if (!visible)
+                {
+                    return;
+                }
+                GameObject go = new GameObject("CoinMultiplierGUI");
+                go.hideFlags = HideFlags.HideAndDontSave;
+                DontDestroyOnLoad(go);
+                instance = go.AddComponent<CoinMultiplierGUI>();
+                // Leaving a run from the pause menu loads a new scene without calling ResumeGame
+                SceneManager.sceneLoaded += (scene, mode) => SetVisible(false);
             }
-            GameObject go = new GameObject("CoinMultiplierGUI");
-            go.hideFlags = HideFlags.HideAndDontSave;
-            DontDestroyOnLoad(go);
-            instance = go.AddComponent<CoinMultiplierGUI>();
+            instance.enabled = visible;
         }
 
         private void OnGUI()
         {
-            if (!Plugin.GamePaused || Plugin.UsingMenuSlider)
-            {
-                return;
-            }
-
             // Scale the panel with screen height so it stays readable on Retina displays
             float scale = Mathf.Max(1f, Screen.height / 720f);
             GUI.matrix = Matrix4x4.Scale(new Vector3(scale, scale, 1f));
@@ -106,24 +107,25 @@ namespace CoinMultiplier
     [HarmonyPatch(typeof(PauseMenu), "PauseGame")]
     internal static class PauseGamePatch
     {
-        // Runs before PauseGame enables the menu page, so the page picks the new item up as a navigation target
-        private static void Prefix(PauseMenu __instance)
+        // Runs before PauseGame enables the menu page, so the page picks the new item up as a navigation target.
+        // __state carries whether the in-game slider is in place over to the postfix.
+        private static void Prefix(PauseMenu __instance, out bool __state)
         {
             try
             {
-                Plugin.UsingMenuSlider = MenuItemInjector.EnsureInjected(__instance);
+                __state = MenuItemInjector.EnsureInjected(__instance);
             }
             catch (Exception e)
             {
-                Plugin.UsingMenuSlider = false;
+                __state = false;
                 Plugin.Log.LogError($"Could not add the slider to the pause menu, using overlay slider: {e}");
             }
         }
 
-        private static void Postfix()
+        // PauseGame does nothing when the menu object is inactive, so only show the overlay if time actually stopped
+        private static void Postfix(bool __state)
         {
-            Plugin.GamePaused = Time.timeScale == 0f;
-            CoinMultiplierGUI.EnsureExists();
+            CoinMultiplierGUI.SetVisible(!__state && Time.timeScale == 0f);
         }
     }
 
@@ -132,7 +134,7 @@ namespace CoinMultiplier
     {
         private static void Postfix()
         {
-            Plugin.GamePaused = false;
+            CoinMultiplierGUI.SetVisible(false);
         }
     }
 }

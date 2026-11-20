@@ -8,32 +8,34 @@ namespace DevMode
     [BepInPlugin("com.flargington.shogunshowdown.devmode", "Dev Mode", "1.0.0")]
     public class Plugin : BaseUnityPlugin
     {
-        internal static ConfigEntry<bool> Enabled;
-
         private void Awake()
         {
-            Enabled = Config.Bind("General", "Enabled", true,
+            ConfigEntry<bool> enabled = Config.Bind("General", "Enabled", true,
                 "Turns on the game's built-in developer mode (hotkeys and the C panel)");
-            if (!Enabled.Value)
+            if (!enabled.Value)
             {
                 Logger.LogInfo("Dev Mode disabled in config");
                 return;
             }
 
+            Harmony harmony = new Harmony("com.flargington.shogunshowdown.devmode");
+            harmony.CreateClassProcessor(typeof(ResetDeveloperUtilsPatch)).Patch();
+
             // get_Developer just reads a static readonly field, so Mono can inline it or fold it into a
             // constant when callers are compiled. Setting the field before any game code is JIT-compiled
-            // covers both cases; the getter patch below is a fallback for callers that are not inlined.
+            // covers both cases. Patching the getter only helps if the field cannot be found, since inlined
+            // callers never call the getter.
             FieldInfo field = AccessTools.Field(typeof(Globals), "<Developer>k__BackingField");
-            if (field == null)
-            {
-                Logger.LogError("Globals.Developer backing field not found; the game may have been updated");
-            }
-            else
+            if (field != null)
             {
                 field.SetValue(null, true);
             }
+            else
+            {
+                Logger.LogWarning("Globals.Developer backing field not found (the game may have been updated); patching the getter instead");
+                harmony.CreateClassProcessor(typeof(DeveloperGetterPatch)).Patch();
+            }
 
-            new Harmony("com.flargington.shogunshowdown.devmode").PatchAll();
             Logger.LogInfo($"Dev Mode loaded (Globals.Developer = {Globals.Developer})");
         }
     }

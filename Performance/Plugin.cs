@@ -12,18 +12,15 @@ namespace Performance
     public class Plugin : BaseUnityPlugin
     {
         private static ManualLogSource log;
-        private static ConfigEntry<bool> reduceLogging;
-        private static ConfigEntry<int> frameRateCap;
-        private static ConfigEntry<bool> disableAntiAliasing;
 
         private void Awake()
         {
             log = Logger;
-            reduceLogging = Config.Bind("General", "ReduceLogging", true,
+            ConfigEntry<bool> reduceLogging = Config.Bind("General", "ReduceLogging", true,
                 "Stop the game writing ordinary Debug.Log messages to Player.log. Warnings and errors are still logged.");
-            frameRateCap = Config.Bind("General", "FrameRateCap", 120,
+            ConfigEntry<int> frameRateCap = Config.Bind("General", "FrameRateCap", 120,
                 "Maximum frames per second, 0 for no cap. Only applies while VSync is Off in the game's options; with VSync on, the display's refresh rate sets the limit.");
-            disableAntiAliasing = Config.Bind("General", "DisableAntiAliasing", true,
+            ConfigEntry<bool> disableAntiAliasing = Config.Bind("General", "DisableAntiAliasing", true,
                 "Turn off MSAA in the quality settings and URP asset, and post-process anti-aliasing on every camera.");
 
             if (reduceLogging.Value)

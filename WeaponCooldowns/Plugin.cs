@@ -11,7 +11,8 @@ namespace WeaponCooldowns
     [BepInPlugin("com.flargington.shogunshowdown.weaponcooldowns", "Weapon Cooldowns", "1.0.0")]
     public class Plugin : BaseUnityPlugin
     {
-        internal static readonly Dictionary<Type, ConfigEntry<int>> Cooldowns = new Dictionary<Type, ConfigEntry<int>>();
+        // Only weapons whose setting differs from the game default; the config is read once at startup
+        internal static readonly Dictionary<Type, int> Overrides = new Dictionary<Type, int>();
 
         private void Awake()
         {
@@ -22,10 +23,12 @@ namespace WeaponCooldowns
             // A plain static field that the Cooldown setter and the upgrade checks read every time
             Attack.maxCooldown = maxCooldown.Value;
 
-            IEnumerable<Type> attackTypes = typeof(Attack).Assembly.GetTypes()
+            // GetTypesFromAssembly skips types that fail to load instead of throwing like Assembly.GetTypes
+            IEnumerable<Type> attackTypes = AccessTools.GetTypesFromAssembly(typeof(Attack).Assembly)
                 .Where(t => t.IsSubclassOf(typeof(Attack)) && !t.IsAbstract)
                 .OrderBy(t => t.Name);
 
+            int weaponCount = 0;
             foreach (Type type in attackTypes)
             {
                 int gameDefault;
@@ -42,14 +45,22 @@ namespace WeaponCooldowns
                 }
 
                 string weapon = type.Name.EndsWith("Attack") ? type.Name.Substring(0, type.Name.Length - "Attack".Length) : type.Name;
-                Cooldowns[type] = Config.Bind("Cooldowns", weapon, gameDefault,
+                ConfigEntry<int> cooldown = Config.Bind("Cooldowns", weapon, gameDefault,
                     new ConfigDescription($"Starting cooldown in turns. Game default: {gameDefault}",
                         new AcceptableValueRange<int>(0, gameMaxCooldown)));
+                weaponCount++;
+                if (cooldown.Value != gameDefault)
+                {
+                    Overrides[type] = cooldown.Value;
+                }
             }
 
-            new Harmony("com.flargington.shogunshowdown.weaponcooldowns").PatchAll();
-            int changed = Cooldowns.Count(pair => pair.Value.Value != (int)pair.Value.DefaultValue);
-            Logger.LogInfo($"Weapon Cooldowns loaded ({Cooldowns.Count} weapons, {changed} changed from the game default, max cooldown {Attack.maxCooldown})");
+            // Every tile, enemy tiles included, goes through Attack.Initialize, so skip the patch when nothing changed
+            if (Overrides.Count > 0)
+            {
+                new Harmony("com.flargington.shogunshowdown.weaponcooldowns").PatchAll();
+            }
+            Logger.LogInfo($"Weapon Cooldowns loaded ({weaponCount} weapons, {Overrides.Count} changed from the game default, max cooldown {Attack.maxCooldown})");
         }
     }
 
@@ -60,9 +71,9 @@ namespace WeaponCooldowns
     {
         private static void Postfix(Attack __instance)
         {
-            if (Plugin.Cooldowns.TryGetValue(__instance.GetType(), out ConfigEntry<int> cooldown))
+            if (Plugin.Overrides.TryGetValue(__instance.GetType(), out int cooldown))
             {
-                __instance.Cooldown = cooldown.Value;
+                __instance.Cooldown = cooldown;
             }
         }
     }
