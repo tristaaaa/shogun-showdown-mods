@@ -14,8 +14,12 @@ Each config file is created the first time the game starts with that mod install
 ## Requirements
 
 - Shogun Showdown installed through Steam
-- [.NET SDK](https://dotnet.microsoft.com/download) 8 or newer (`brew install dotnet` on macOS, `winget install Microsoft.DotNet.SDK.8` on Windows, your distro's `dotnet-sdk` package on Linux)
 - [BepInEx 5](https://github.com/BepInEx/BepInEx/releases) for your platform, installed in the game folder and launched once so it creates `BepInEx/plugins`
+- [.NET SDK](https://dotnet.microsoft.com/download) 8 or newer, only for building from source (`brew install dotnet` on macOS, `winget install Microsoft.DotNet.SDK.8` on Windows, your distro's `dotnet-sdk` package on Linux)
+
+## Installing
+
+Download the zip (or the DLL for each mod you want) from [Releases](https://github.com/tristaaaa/shogun-showdown-mods/releases), copy the DLLs into the game's `BepInEx/plugins` folder and restart the game. The DLLs are the same for every platform.
 
 ## Building
 
@@ -55,6 +59,16 @@ dotnet build -c Release -p:GameDir="D:/SteamLibrary/steamapps/common/Shogun Show
 ```
 
 BepInEx's DLLs are taken from the BepInEx installed in the game folder. To build against a different copy, extract a BepInEx release into `downloads/bepinex/` next to this README. All of these paths are set in `Directory.Build.props`.
+
+### Making a release
+
+Commit and push first, then on macOS or Linux, with the [GitHub CLI](https://cli.github.com) signed in:
+
+```
+./release.sh 1.0.1 notes.md
+```
+
+This builds every mod and publishes GitHub release v1.0.1 from the pushed commit, with `notes.md` as the release text and the DLLs attached one by one and as a zip.
 
 ## Screenshots
 

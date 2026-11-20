@@ -1,6 +1,7 @@
-# Build output
+# Build output, and release packages made by release.sh
 bin/
 obj/
+dist/
 
 # IDE files (Visual Studio, Rider, VS Code)
 .vs/
