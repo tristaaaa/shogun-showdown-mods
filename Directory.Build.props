@@ -37,5 +37,8 @@
     <BepInExCore Condition="'$(BepInExCore)' == ''">$(GameDir)/BepInEx/core</BepInExCore>
 
     <PluginsDir Condition="'$(PluginsDir)' == ''">$(GameDir)/BepInEx/plugins</PluginsDir>
+
+    <!-- Record source and symbol paths relative to this folder, so the built DLLs do not contain the local path -->
+    <PathMap>$(MSBuildThisFileDirectory)=/_/</PathMap>
   </PropertyGroup>
 </Project>
