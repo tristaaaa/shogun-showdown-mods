@@ -8,11 +8,11 @@ using UnityEngine.SceneManagement;
 
 namespace CoinMultiplier
 {
-    [BepInPlugin("com.flargington.shogunshowdown.coinmultiplier", "Coin Multiplier", "1.0.0")]
+    [BepInPlugin("com.flargington.shogunshowdown.coinmultiplier", "Coin Multiplier", "1.1.0")]
     public class Plugin : BaseUnityPlugin
     {
         public const float MinMultiplier = 1f;
-        public const float MaxMultiplier = 3f;
+        public const float MaxMultiplier = 5f;
 
         internal static ConfigEntry<float> Multiplier;
         internal static ManualLogSource Log;

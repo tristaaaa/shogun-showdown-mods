@@ -4,7 +4,7 @@ BepInEx 5 plugins for Shogun Showdown (Unity 2021.3, Mono). Built and tested on 
 
 | Mod | What it does | Settings (`BepInEx/config/`) |
 |---|---|---|
-| CoinMultiplier | Multiplies coins picked up (x1.0 to x3.0). Adds a fully responsive slider with label to the pause menu. | `com.flargington.shogunshowdown.coinmultiplier.cfg` |
+| CoinMultiplier | Multiplies coins picked up (x1.0 to x5.0). Adds a fully responsive slider with label to the pause menu. | `com.flargington.shogunshowdown.coinmultiplier.cfg` |
 | DevMode | Turns on the game's built-in developer mode (hotkeys H, K, N, M, T, R, Q and the C panel). | `com.flargington.shogunshowdown.devmode.cfg` |
 | Performance | Filters routine Unity logging, caps the frame rate (with VSync off) and turns off anti-aliasing. | `com.flargington.shogunshowdown.performance.cfg` |
 | WeaponCooldowns | Per-weapon starting cooldowns and maximum cooldown configuration. | `com.flargington.shogunshowdown.weaponcooldowns.cfg` |
